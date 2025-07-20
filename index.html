@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Budget Tracker Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="icon" href="https://cdn-icons-png.flaticon.com/512/2784/2784445.png">
+<style>
+body { font-family: 'Poppins', sans-serif; background: #f5f5f5 url('https://images.unsplash.com/photo-1612832021064-9fb79ad51228?ixlib=rb-4.0.3&auto=format&fit=crop&w=1740&q=80') no-repeat center center fixed; background-size: cover; margin: 0; padding: 0; color: #333; }
+header { background: rgba(0,121,107,0.9); color: white; text-align: center; padding: 1rem; font-size: 1.4rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+header img { height: 50px; border-radius: 8px; }
+.container { max-width: 850px; margin: 25px auto; padding: 25px; background: rgba(255,255,255,0.97) url('https://cdn-icons-png.flaticon.com/512/3094/3094840.png') no-repeat top right; background-size: 100px; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+button { background: linear-gradient(45deg, #009688, #00695c); color: white; border: none; padding: 12px 18px; margin: 6px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: transform 0.2s, box-shadow 0.3s; }
+button:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+input, select, textarea { width: 100%; padding: 12px; margin: 10px 0; border-radius: 6px; border: 1px solid #ccc; font-size: 1rem; }
+.section { margin-top: 22px; animation: fadeIn 0.8s ease-in-out; }
+canvas { margin-top: 22px; background: #fff; border-radius: 10px; padding: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+@keyframes fadeIn { from {opacity: 0; transform: translateY(20px);} to {opacity: 1; transform: translateY(0);} }
+</style>
+</head>
+<body>
+<header><img src="https://cdn-icons-png.flaticon.com/512/2784/2784445.png" alt="Budget Tracker Logo"> Budget Tracker Dashboard</header>
+<div class="container">
+  <button onclick="addTransactionForm()">Add Transaction</button>
+  <button onclick="filterTransactionsForm()">Filter/Search</button>
+  <button onclick="exportCSV()">Export CSV</button>
+  <button onclick="generatePDF()">Generate PDF Report</button>
+  <button onclick="showDashboard()">Dashboard Widgets</button>
+  <button onclick="manageSettlements()">Settlement Tracking</button>
+  <button onclick="addRecurringExpenseForm()">Add Recurring Expense</button>
+  <button onclick="setBudgetAlertForm()">Set Budget Alert</button>
+  <button onclick="currencyConverterForm()">Currency Converter</button>
+  <div id="content"></div>
+  <canvas id="dashboardChart"></canvas>
+</div>
+<script>
+let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+function displayInfo(message) { document.getElementById('content').innerHTML = `<div class='section'>${message}</div>`; }
+function addTransactionForm() {
+  let form = `
+    <div class='section'>
+      <h3>Add Transaction</h3>
+      <input type='text' id='name' placeholder='Name'><br>
+      <input type='number' id='amount' placeholder='Amount'><br>
+      <input type='text' id='category' placeholder='Category'><br>
+      <input type='text' id='description' placeholder='Description'><br>
+      <button onclick='addTransaction()'>Save Transaction</button>
+    </div>`;
+  displayInfo(form);
+}
+function addTransaction() {
+  const name = document.getElementById('name').value;
+  const amount = parseFloat(document.getElementById('amount').value);
+  const category = document.getElementById('category').value;
+  const description = document.getElementById('description').value;
+  const date = new Date().toISOString().split('T')[0];
+  transactions.push({ name, amount, category, description, date });
+  localStorage.setItem('transactions', JSON.stringify(transactions));
+  displayInfo(`<p>Transaction Added: ${name} paid ₹${amount} for ${description} under ${category} on ${date}.</p>`);
+}
+function filterTransactionsForm() {
+  let form = `
+    <div class='section'>
+      <h3>Filter/Search Transactions</h3>
+      <input type='text' id='searchTerm' placeholder='Enter name or category'>
+      <button onclick='filterTransactions()'>Search</button>
+    </div>`;
+  displayInfo(form);
+}
+function filterTransactions() {
+  const term = document.getElementById('searchTerm').value;
+  const results = transactions.filter(t => t.name.includes(term) || t.category.includes(term));
+  let html = '<div class="section"><h3>Search Results</h3>';
+  results.forEach(t => { html += `<p>${t.date} - ${t.name} - ₹${t.amount} - ${t.category} - ${t.description}</p>`; });
+  html += '</div>';
+  displayInfo(html);
+}
+function exportCSV() { let csv = 'Name,Amount,Category,Description,Date\n'; transactions.forEach(t=>{csv+=`${t.name},${t.amount},${t.category},${t.description},${t.date}\n`}); const blob = new Blob([csv],{type:'text/csv'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'transactions.csv'; a.click(); URL.revokeObjectURL(url); displayInfo('<p>CSV exported successfully.</p>'); }
+function generatePDF() { const { jsPDF } = window.jspdf; const doc = new jsPDF(); doc.text('Transaction Report', 10, 10); transactions.forEach((t,i)=>{ doc.text(`${i+1}. ${t.date} - ${t.name} - ₹${t.amount} - ${t.category}`, 10, 20 + i*10); }); doc.save('report.pdf'); displayInfo('<p>PDF report generated and downloaded.</p>'); }
+function showDashboard() { const ctx = document.getElementById('dashboardChart').getContext('2d'); const categories = {}; transactions.forEach(t=>{categories[t.category]= (categories[t.category]||0)+t.amount}); if(window.myChart) window.myChart.destroy(); window.myChart = new Chart(ctx,{ type:'bar', data:{ labels:Object.keys(categories), datasets:[{ label:'Expenses', data:Object.values(categories), backgroundColor:['#00bfa5','#ff6f00','#d50000','#6200ea','#2962ff','#c51162'] }] }, options:{ responsive:true } }); displayInfo('<p>Dashboard chart displayed below.</p>'); }
+function manageSettlements() { let names = [...new Set(transactions.map(t=>t.name))]; let total = transactions.reduce((sum,t)=>sum+t.amount,0); let perPerson = total / names.length; let html = '<div class="section"><h3>Settlement</h3>'; names.forEach(n=>{ let paid = transactions.filter(t=>t.name==n).reduce((s,t)=>s+t.amount,0); let diff = paid - perPerson; html+=`<p>${n} ${diff>=0?'lent':'owes'} ₹${Math.abs(diff).toFixed(2)}</p>`; }); html+='</div>'; displayInfo(html); }
+function addRecurringExpenseForm() {
+  let form = `
+    <div class='section'>
+      <h3>Add Recurring Expense</h3>
+      <input type='text' id='rname' placeholder='Name'><br>
+      <input type='number' id='ramount' placeholder='Amount'><br>
+      <input type='text' id='rcategory' placeholder='Category'><br>
+      <input type='text' id='rdescription' placeholder='Description'><br>
+      <button onclick='addRecurringExpense()'>Save Recurring Expense</button>
+    </div>`;
+  displayInfo(form);
+}
+function addRecurringExpense() {
+  const name = document.getElementById('rname').value;
+  const amount = parseFloat(document.getElementById('ramount').value);
+  const category = document.getElementById('rcategory').value;
+  const description = document.getElementById('rdescription').value;
+  setInterval(()=>{ const date = new Date().toISOString().split('T')[0]; transactions.push({ name, amount, category, description, date }); localStorage.setItem('transactions', JSON.stringify(transactions)); displayInfo(`<p>Recurring expense added for ${name}: ₹${amount} under ${category} on ${date}.</p>`); }, 30000);
+  displayInfo('<p>Recurring expense set. Adds every 30 seconds for demo.</p>');
+}
+function setBudgetAlertForm() {
+  let form = `
+    <div class='section'>
+      <h3>Set Budget Alert</h3>
+      <input type='number' id='budgetLimit' placeholder='Enter budget limit'>
+      <button onclick='setBudgetAlert()'>Set Alert</button>
+    </div>`;
+  displayInfo(form);
+}
+function setBudgetAlert() {
+  const limit = parseFloat(document.getElementById('budgetLimit').value);
+  const total = transactions.reduce((s,t)=>s+t.amount,0);
+  if(total>limit) displayInfo(`<p>Alert: Budget limit exceeded! Total expenses: ₹${total}</p>`);
+  else displayInfo(`<p>Under budget. Total expenses: ₹${total}</p>`);
+}
+function currencyConverterForm() {
+  let form = `
+    <div class='section'>
+      <h3>Currency Converter</h3>
+      <input type='number' id='inrAmount' placeholder='Amount in INR'>
+      <button onclick='currencyConverter()'>Convert</button>
+    </div>`;
+  displayInfo(form);
+}
+function currencyConverter() {
+  const amount = parseFloat(document.getElementById('inrAmount').value);
+  const rate = 0.012;
+  displayInfo(`<p>₹${amount} = $${(amount*rate).toFixed(2)} USD</p>`);
+}
+</script>
+</body>
+</html>
