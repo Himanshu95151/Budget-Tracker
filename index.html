@@ -1,135 +1,278 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Budget Tracker Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<link rel="icon" href="https://cdn-icons-png.flaticon.com/512/2784/2784445.png">
-<style>
-body { font-family: 'Poppins', sans-serif; background: #f5f5f5 url('https://images.unsplash.com/photo-1612832021064-9fb79ad51228?ixlib=rb-4.0.3&auto=format&fit=crop&w=1740&q=80') no-repeat center center fixed; background-size: cover; margin: 0; padding: 0; color: #333; }
-header { background: rgba(0,121,107,0.9); color: white; text-align: center; padding: 1rem; font-size: 1.4rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-header img { height: 50px; border-radius: 8px; }
-.container { max-width: 850px; margin: 25px auto; padding: 25px; background: rgba(255,255,255,0.97) url('https://cdn-icons-png.flaticon.com/512/3094/3094840.png') no-repeat top right; background-size: 100px; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
-button { background: linear-gradient(45deg, #009688, #00695c); color: white; border: none; padding: 12px 18px; margin: 6px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: transform 0.2s, box-shadow 0.3s; }
-button:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
-input, select, textarea { width: 100%; padding: 12px; margin: 10px 0; border-radius: 6px; border: 1px solid #ccc; font-size: 1rem; }
-.section { margin-top: 22px; animation: fadeIn 0.8s ease-in-out; }
-canvas { margin-top: 22px; background: #fff; border-radius: 10px; padding: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-@keyframes fadeIn { from {opacity: 0; transform: translateY(20px);} to {opacity: 1; transform: translateY(0);} }
-</style>
+  <meta charset="UTF-8">
+  <title>Splitwise-Like App with AI Insights</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f3f4f6;
+      color: #111;
+      transition: background 0.5s, color 0.5s;
+    }
+    .dark body { background: #0f172a; color: #e5e7eb; }
+
+    h2, h3 {
+      color: #0d9488;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .box {
+      background: white;
+      padding: 20px;
+      margin: 15px 0;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    }
+    .dark .box { background: #1e293b; }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+
+    button {
+      background: linear-gradient(45deg, #0d9488, #059669);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin-top: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .alert {
+      background: #ecfdf5;
+      color: #065f46;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 6px;
+    }
+  </style>
 </head>
 <body>
-<header><img src="https://cdn-icons-png.flaticon.com/512/2784/2784445.png" alt="Budget Tracker Logo"> Budget Tracker Dashboard</header>
-<div class="container">
-  <button onclick="addTransactionForm()">Add Transaction</button>
-  <button onclick="filterTransactionsForm()">Filter/Search</button>
-  <button onclick="exportCSV()">Export CSV</button>
-  <button onclick="generatePDF()">Generate PDF Report</button>
-  <button onclick="showDashboard()">Dashboard Widgets</button>
-  <button onclick="manageSettlements()">Settlement Tracking</button>
-  <button onclick="addRecurringExpenseForm()">Add Recurring Expense</button>
-  <button onclick="setBudgetAlertForm()">Set Budget Alert</button>
-  <button onclick="currencyConverterForm()">Currency Converter</button>
-  <div id="content"></div>
-  <canvas id="dashboardChart"></canvas>
+<h2>Splitwise-Like App 💸</h2>
+<button onclick="toggleDarkMode()">🌓 Toggle Dark Mode</button>
+
+<div class="box">
+  <h3>Create Group</h3>
+  <input type="text" id="groupName" placeholder="Group Name">
+  <input type="text" id="groupMembers" placeholder="Comma-separated Members (e.g. Alice,Bob)">
+  <button onclick="createGroup()">Create Group</button>
 </div>
+
+<div class="box">
+  <h3>Add Expense</h3>
+  <select id="expenseGroup"></select>
+  <input type="text" id="payer" placeholder="Paid by (name)">
+  <input type="number" id="amount" placeholder="Amount">
+  <input type="text" id="description" placeholder="Description">
+  <select id="splitMethod" onchange="generateSplitInputs()">
+    <option value="equal">Split Equally</option>
+    <option value="percent">Split by Percentage</option>
+    <option value="exact">Split by Exact Amount</option>
+  </select>
+  <div id="splitInputs"></div>
+  <button onclick="addExpense()">Add Expense</button>
+</div>
+
+<div class="box">
+  <h3>Record Settlement</h3>
+  <select id="settleGroup"></select>
+  <input type="text" id="settler" placeholder="Who paid">
+  <input type="text" id="settlee" placeholder="To whom">
+  <input type="number" id="settleAmount" placeholder="Amount">
+  <button onclick="recordSettlement()">Record Settlement</button>
+</div>
+
+<div class="box">
+  <h3>View Balances</h3>
+  <select id="balanceGroup" onchange="showBalances()"></select>
+  <div id="balances"></div>
+</div>
+
+<div class="box">
+  <h3>Expense History</h3>
+  <select id="historyGroup" onchange="showHistory(); generateAIInsights()"></select>
+  <div id="history"></div>
+  <button onclick="exportCSV()">Export CSV</button>
+</div>
+
+<div class="box">
+  <h3>🤖 AI Expense Insights</h3>
+  <div id="aiInsights">📉 Not enough data for insights.</div>
+</div>
+
+<div class="box">
+  <h3>📝 Group Notes</h3>
+  <textarea id="notesArea" rows="6" placeholder="Write group notes..."></textarea>
+  <button onclick="clearNotes()">🗑️ Clear Notes</button>
+</div>
+
 <script>
-let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
-function displayInfo(message) { document.getElementById('content').innerHTML = `<div class='section'>${message}</div>`; }
-function addTransactionForm() {
-  let form = `
-    <div class='section'>
-      <h3>Add Transaction</h3>
-      <input type='text' id='name' placeholder='Name'><br>
-      <input type='number' id='amount' placeholder='Amount'><br>
-      <input type='text' id='category' placeholder='Category'><br>
-      <input type='text' id='description' placeholder='Description'><br>
-      <button onclick='addTransaction()'>Save Transaction</button>
-    </div>`;
-  displayInfo(form);
+let groups = JSON.parse(localStorage.getItem('groups')) || [];
+
+function saveGroups() { localStorage.setItem('groups', JSON.stringify(groups)); }
+
+function updateDropdowns() {
+  const ids = ['expenseGroup','settleGroup','balanceGroup','historyGroup'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = groups.map((g,i)=>`<option value="${i}">${g.name}</option>`).join('');
+  });
+  generateAIInsights();
 }
-function addTransaction() {
-  const name = document.getElementById('name').value;
+
+function showAlert(msg) {
+  const alert = document.createElement('div');
+  alert.className = 'alert';
+  alert.textContent = msg;
+  document.body.insertBefore(alert, document.body.firstChild);
+  setTimeout(() => alert.remove(), 2500);
+}
+
+function createGroup() {
+  const name = document.getElementById('groupName').value.trim();
+  const members = document.getElementById('groupMembers').value.split(',').map(m => m.trim()).filter(Boolean);
+  if (!name || members.length < 2) return showAlert('⚠️ Need at least 2 members.');
+  groups.push({ name, members, expenses: [], settlements: [] });
+  saveGroups(); updateDropdowns(); showAlert('✅ Group Created');
+}
+
+function generateSplitInputs() {
+  const i = document.getElementById('expenseGroup').value;
+  const group = groups[i];
+  const method = document.getElementById('splitMethod').value;
+  const div = document.getElementById('splitInputs');
+  div.innerHTML = '';
+  group.members.forEach(m => {
+    div.innerHTML += `<label>${m}</label><input type="number" data-member="${m}" placeholder="${method === 'percent' ? 'Percent' : 'Amount'}"><br>`;
+  });
+}
+
+function addExpense() {
+  const i = document.getElementById('expenseGroup').value;
+  const group = groups[i];
+  const payer = document.getElementById('payer').value.trim();
   const amount = parseFloat(document.getElementById('amount').value);
-  const category = document.getElementById('category').value;
-  const description = document.getElementById('description').value;
-  const date = new Date().toISOString().split('T')[0];
-  transactions.push({ name, amount, category, description, date });
-  localStorage.setItem('transactions', JSON.stringify(transactions));
-  displayInfo(`<p>Transaction Added: ${name} paid ₹${amount} for ${description} under ${category} on ${date}.</p>`);
+  const desc = document.getElementById('description').value.trim();
+  const method = document.getElementById('splitMethod').value;
+  if (!payer || isNaN(amount)) return showAlert('⚠️ Invalid inputs');
+
+  const splits = {}, inputs = document.querySelectorAll('#splitInputs input');
+  let totalCheck = 0;
+
+  if (method === 'equal') {
+    const share = amount / group.members.length;
+    group.members.forEach(m => splits[m] = -share);
+    splits[payer] += amount;
+  } else if (method === 'percent') {
+    inputs.forEach(input => {
+      const m = input.dataset.member;
+      const val = parseFloat(input.value);
+      splits[m] = -(val / 100 * amount);
+      totalCheck += val;
+    });
+    if (totalCheck !== 100) return showAlert('⚠️ Percent must total 100.');
+    splits[payer] += amount;
+  } else {
+    inputs.forEach(input => {
+      const m = input.dataset.member;
+      const val = parseFloat(input.value);
+      splits[m] = -val;
+      totalCheck += val;
+    });
+    if (Math.abs(totalCheck - amount) > 0.01) return showAlert('⚠️ Amount mismatch');
+    splits[payer] += amount;
+  }
+  group.expenses.push({ payer, amount, description: desc, splits, date: new Date().toLocaleDateString() });
+  saveGroups(); showAlert('✅ Expense Added');
+  showBalances(); showHistory(); generateAIInsights();
 }
-function filterTransactionsForm() {
-  let form = `
-    <div class='section'>
-      <h3>Filter/Search Transactions</h3>
-      <input type='text' id='searchTerm' placeholder='Enter name or category'>
-      <button onclick='filterTransactions()'>Search</button>
-    </div>`;
-  displayInfo(form);
+
+function recordSettlement() {
+  const i = document.getElementById('settleGroup').value;
+  const group = groups[i];
+  const from = document.getElementById('settler').value.trim();
+  const to = document.getElementById('settlee').value.trim();
+  const amount = parseFloat(document.getElementById('settleAmount').value);
+  const splits = {}; splits[from] = -amount; splits[to] = amount;
+  group.settlements.push({ from, to, amount });
+  group.expenses.push({ payer: from, amount, description: `Settlement to ${to}`, splits, date: new Date().toLocaleDateString() });
+  saveGroups(); showAlert('✅ Settlement Recorded');
+  showBalances(); showHistory(); generateAIInsights();
 }
-function filterTransactions() {
-  const term = document.getElementById('searchTerm').value;
-  const results = transactions.filter(t => t.name.includes(term) || t.category.includes(term));
-  let html = '<div class="section"><h3>Search Results</h3>';
-  results.forEach(t => { html += `<p>${t.date} - ${t.name} - ₹${t.amount} - ${t.category} - ${t.description}</p>`; });
-  html += '</div>';
-  displayInfo(html);
+
+function showBalances() {
+  const i = document.getElementById('balanceGroup').value;
+  const group = groups[i];
+  const total = {}; group.members.forEach(m => total[m] = 0);
+  group.expenses.forEach(e => { for (const m in e.splits) total[m] += e.splits[m]; });
+  document.getElementById('balances').innerHTML = '<ul>' + group.members.map(m => `<li>${m}: ₹${total[m].toFixed(2)}</li>`).join('') + '</ul>';
 }
-function exportCSV() { let csv = 'Name,Amount,Category,Description,Date\n'; transactions.forEach(t=>{csv+=`${t.name},${t.amount},${t.category},${t.description},${t.date}\n`}); const blob = new Blob([csv],{type:'text/csv'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'transactions.csv'; a.click(); URL.revokeObjectURL(url); displayInfo('<p>CSV exported successfully.</p>'); }
-function generatePDF() { const { jsPDF } = window.jspdf; const doc = new jsPDF(); doc.text('Transaction Report', 10, 10); transactions.forEach((t,i)=>{ doc.text(`${i+1}. ${t.date} - ${t.name} - ₹${t.amount} - ${t.category}`, 10, 20 + i*10); }); doc.save('report.pdf'); displayInfo('<p>PDF report generated and downloaded.</p>'); }
-function showDashboard() { const ctx = document.getElementById('dashboardChart').getContext('2d'); const categories = {}; transactions.forEach(t=>{categories[t.category]= (categories[t.category]||0)+t.amount}); if(window.myChart) window.myChart.destroy(); window.myChart = new Chart(ctx,{ type:'bar', data:{ labels:Object.keys(categories), datasets:[{ label:'Expenses', data:Object.values(categories), backgroundColor:['#00bfa5','#ff6f00','#d50000','#6200ea','#2962ff','#c51162'] }] }, options:{ responsive:true } }); displayInfo('<p>Dashboard chart displayed below.</p>'); }
-function manageSettlements() { let names = [...new Set(transactions.map(t=>t.name))]; let total = transactions.reduce((sum,t)=>sum+t.amount,0); let perPerson = total / names.length; let html = '<div class="section"><h3>Settlement</h3>'; names.forEach(n=>{ let paid = transactions.filter(t=>t.name==n).reduce((s,t)=>s+t.amount,0); let diff = paid - perPerson; html+=`<p>${n} ${diff>=0?'lent':'owes'} ₹${Math.abs(diff).toFixed(2)}</p>`; }); html+='</div>'; displayInfo(html); }
-function addRecurringExpenseForm() {
-  let form = `
-    <div class='section'>
-      <h3>Add Recurring Expense</h3>
-      <input type='text' id='rname' placeholder='Name'><br>
-      <input type='number' id='ramount' placeholder='Amount'><br>
-      <input type='text' id='rcategory' placeholder='Category'><br>
-      <input type='text' id='rdescription' placeholder='Description'><br>
-      <button onclick='addRecurringExpense()'>Save Recurring Expense</button>
-    </div>`;
-  displayInfo(form);
+
+function showHistory() {
+  const i = document.getElementById('historyGroup').value;
+  const group = groups[i];
+  document.getElementById('history').innerHTML = '<ul>' + group.expenses.map(e => `<li>${e.date}: ${e.payer} paid ₹${e.amount} for "${e.description}"</li>`).join('') + '</ul>';
 }
-function addRecurringExpense() {
-  const name = document.getElementById('rname').value;
-  const amount = parseFloat(document.getElementById('ramount').value);
-  const category = document.getElementById('rcategory').value;
-  const description = document.getElementById('rdescription').value;
-  setInterval(()=>{ const date = new Date().toISOString().split('T')[0]; transactions.push({ name, amount, category, description, date }); localStorage.setItem('transactions', JSON.stringify(transactions)); displayInfo(`<p>Recurring expense added for ${name}: ₹${amount} under ${category} on ${date}.</p>`); }, 30000);
-  displayInfo('<p>Recurring expense set. Adds every 30 seconds for demo.</p>');
+
+function exportCSV() {
+  const i = document.getElementById('historyGroup').value;
+  const group = groups[i];
+  let csv = 'Date,Payer,Amount,Description\n';
+  group.expenses.forEach(e => csv += `${e.date},${e.payer},${e.amount},"${e.description}"\n`);
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `${group.name}_expenses.csv`; a.click();
+  URL.revokeObjectURL(url);
 }
-function setBudgetAlertForm() {
-  let form = `
-    <div class='section'>
-      <h3>Set Budget Alert</h3>
-      <input type='number' id='budgetLimit' placeholder='Enter budget limit'>
-      <button onclick='setBudgetAlert()'>Set Alert</button>
-    </div>`;
-  displayInfo(form);
+
+function toggleDarkMode() {
+  document.body.classList.toggle('dark');
 }
-function setBudgetAlert() {
-  const limit = parseFloat(document.getElementById('budgetLimit').value);
-  const total = transactions.reduce((s,t)=>s+t.amount,0);
-  if(total>limit) displayInfo(`<p>Alert: Budget limit exceeded! Total expenses: ₹${total}</p>`);
-  else displayInfo(`<p>Under budget. Total expenses: ₹${total}</p>`);
+
+function generateAIInsights() {
+  const i = document.getElementById('historyGroup').value;
+  const group = groups[i];
+  if (!group || group.expenses.length < 1) {
+    document.getElementById('aiInsights').innerHTML = '📉 Not enough data for insights.';
+    return;
+  }
+  const spenders = {}; const insights = [];
+  group.expenses.forEach(e => {
+    spenders[e.payer] = (spenders[e.payer] || 0) + e.amount;
+    if (e.amount >= 2000) insights.push(`💰 High spend: ₹${e.amount} on "${e.description}" by ${e.payer}`);
+  });
+  const top = Object.entries(spenders).sort((a,b)=>b[1]-a[1])[0];
+  if (top) insights.push(`📈 Top spender: ${top[0]} (₹${top[1].toFixed(2)})`);
+  document.getElementById('aiInsights').innerHTML = '<ul>' + insights.map(i => `<li>${i}</li>`).join('') + '</ul>';
 }
-function currencyConverterForm() {
-  let form = `
-    <div class='section'>
-      <h3>Currency Converter</h3>
-      <input type='number' id='inrAmount' placeholder='Amount in INR'>
-      <button onclick='currencyConverter()'>Convert</button>
-    </div>`;
-  displayInfo(form);
+
+const savedNotes = localStorage.getItem('groupNotes');
+document.getElementById('notesArea').value = savedNotes || '';
+document.getElementById('notesArea').addEventListener('input', () => {
+  localStorage.setItem('groupNotes', document.getElementById('notesArea').value);
+});
+function clearNotes() {
+  if (confirm("Clear notes?")) {
+    localStorage.removeItem('groupNotes');
+    document.getElementById('notesArea').value = '';
+    showAlert("🧹 Notes cleared");
+  }
 }
-function currencyConverter() {
-  const amount = parseFloat(document.getElementById('inrAmount').value);
-  const rate = 0.012;
-  displayInfo(`<p>₹${amount} = $${(amount*rate).toFixed(2)} USD</p>`);
-}
+
+updateDropdowns();
 </script>
 </body>
 </html>
